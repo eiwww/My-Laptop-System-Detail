@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>My Arch + Hyprland Setup</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #fff1f2;
+    --bg-dim: #f3e8ee;
+    --surface: #fff8fa;
+    --surface-1: #ffeff2;
+    --surface-2: #ffe9ed;
+    --surface-3: #ffe4e6;
+    --border: #fbcfe8;
+    --text: #0f172a;
+    --text-dim: #4c0519;
+    --muted: #9d174d;
+    --primary: #db2777;
+    --primary-dim: #be185d;
+    --primary-deep: #9d174d;
+    --on-primary: #ffffff;
+    --code-bg: #ffe4e6;
+    --shadow: 0 1px 2px rgba(157,23,77,.06), 0 8px 24px rgba(219,39,119,.08);
+    --radius: 14px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #1a0a12;
+      --bg-dim: #200a15;
+      --surface: #241019;
+      --surface-1: #2b121e;
+      --surface-2: #331524;
+      --surface-3: #3d1a2b;
+      --border: #5c2340;
+      --text: #fce7f3;
+      --text-dim: #fbcfe8;
+      --muted: #f472b6;
+      --primary: #f472b6;
+      --primary-dim: #ec4899;
+      --primary-deep: #fbcfe8;
+      --on-primary: #2c0015;
+      --code-bg: #331524;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans","Noto Sans Thai","Noto Sans Lao","Noto Sans JP",sans-serif;
+    line-height:1.6;
+    padding-inline: 16px;
+  }
+  img{max-width:100%;}
+  [hidden]{display:none!important;}
+
+  a{color:var(--primary); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  .wrap{max-width:1080px; margin:0 auto; padding-block:32px 80px;}
+
+  .hero{
+    background:linear-gradient(135deg, var(--primary) 0%, var(--primary-dim) 55%, var(--primary-deep) 100%);
+    color:var(--on-primary);
+    border-radius:20px;
+    padding:36px 32px;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 85% 20%, rgba(255,255,255,.18), transparent 45%);
+    pointer-events:none;
+  }
+  .hero-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; position:relative; z-index:2;}
+  .hero .eyebrow{
+    font-size:.8rem; letter-spacing:.08em; text-transform:uppercase; opacity:.85; font-weight:600;
+  }
+  .hero h1{margin:.3em 0 .15em; font-size:clamp(1.6rem, 4vw, 2.4rem); position:relative; z-index:2;}
+  .hero p{margin:0; opacity:.92; max-width:60ch; position:relative; z-index:2;}
+  .hero .tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; position:relative; z-index:2;}
+  .chip{
+    background:rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.35);
+    color:var(--on-primary);
+    padding:4px 12px; border-radius:999px; font-size:.82rem; font-weight:600;
+    backdrop-filter:blur(4px);
+  }
+
+  .langsw{display:flex; gap:6px; flex-wrap:wrap;}
+  .langsw button{
+    background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.4); color:var(--on-primary);
+    font-size:.75rem; font-weight:700; padding:5px 11px; border-radius:8px; cursor:pointer;
+    font-family:inherit;
+  }
+  .langsw button:hover{background:rgba(255,255,255,.3);}
+  .langsw button[aria-pressed="true"]{background:#ffffff; color:var(--primary-deep); border-color:#ffffff;}
+
+  nav.toc{
+    display:flex; flex-wrap:wrap; gap:8px;
+    margin:24px 0 8px;
+    position:sticky; top:calc(env(safe-area-inset-top,0px) + 8px);
+    background:var(--bg); padding:10px 0; z-index:5;
+  }
+  nav.toc a{
+    background:var(--surface); border:1px solid var(--border);
+    padding:6px 12px; border-radius:999px; font-size:.85rem; color:var(--text-dim); font-weight:600;
+  }
+  nav.toc a:hover{background:var(--surface-2); text-decoration:none; color:var(--primary);}
+
+  section{margin-top:48px; scroll-margin-top:60px;}
+  section > h2{
+    font-size:1.4rem; margin:0 0 4px;
+    display:flex; align-items:center; gap:10px;
+  }
+  section > h2 .num{
+    color:var(--primary); font-variant-numeric:tabular-nums; font-size:1rem;
+  }
+  section > .lede{color:var(--muted); margin:0 0 20px; max-width:70ch;}
+
+  .grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr));}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow);
+  }
+  .card h3{margin:0 0 6px; font-size:1rem; display:flex; align-items:center; gap:8px;}
+  .card p{margin:0; font-size:.9rem; color:var(--text-dim);}
+  .card .stat{font-size:1.6rem; font-weight:700; color:var(--primary); margin:2px 0 4px;}
+
+  table{width:100%; border-collapse:collapse; background:var(--surface); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+  th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--border); font-size:.92rem;}
+  th{background:var(--surface-2); color:var(--text-dim); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em;}
+  tr:last-child td{border-bottom:none;}
+  .tbl-wrap{overflow-x:auto; border-radius:var(--radius);}
+
+  kbd{
+    background:var(--code-bg); border:1px solid var(--border); border-bottom-width:2px;
+    border-radius:6px; padding:2px 7px; font-family:ui-monospace,"JetBrains Mono",monospace;
+    font-size:.85em; color:var(--primary-deep); white-space:nowrap;
+  }
+  code{
+    background:var(--code-bg); border-radius:5px; padding:1px 6px;
+    font-family:ui-monospace,"JetBrains Mono",monospace; font-size:.88em; color:var(--primary-deep);
+  }
+
+  .glossary dt{font-weight:700; color:var(--primary-deep); margin-top:14px;}
+  .glossary dd{margin:2px 0 0; color:var(--text-dim);}
+
+  .swatches{display:flex; flex-wrap:wrap; gap:10px;}
+  .swatch{
+    width:92px; text-align:center; font-size:.72rem; color:var(--text-dim);
+  }
+  .swatch .box{
+    height:54px; border-radius:10px; border:1px solid var(--border); margin-bottom:5px; box-shadow:var(--shadow);
+  }
+
+  .callout{
+    background:var(--surface-3); border-left:4px solid var(--primary);
+    border-radius:10px; padding:14px 16px; font-size:.92rem; color:var(--text-dim);
+  }
+  .callout strong{color:var(--text);}
+
+  .tree{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 18px; font-family:ui-monospace,"JetBrains Mono",monospace; font-size:.85rem;
+    overflow-x:auto; box-shadow:var(--shadow); color:var(--text-dim);
+  }
+  .tree .dir{color:var(--primary); font-weight:600;}
+
+  footer{
+    margin-top:60px; padding-top:20px; border-top:1px solid var(--border);
+    font-size:.82rem; color:var(--muted); text-align:center;
+  }
+
+  .badge-row{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .badge{
+    font-size:.72rem; font-weight:700; padding:2px 9px; border-radius:6px;
+    background:var(--surface-2); color:var(--primary-deep); border:1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-top">
+      <div class="eyebrow" data-i18n="hero_eyebrow">System Reference · Generated by Claude Code</div>
+      <div class="langsw" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="th">TH</button>
+        <button type="button" data-lang="la">LA</button>
+        <button type="button" data-lang="ja">JA</button>
+      </div>
+    </div>
+    <h1 data-i18n="hero_h1">Your Arch Linux + Hyprland Setup, Explained</h1>
+    <p data-i18n="hero_p">A plain-language map of everything running on your machine — the OS, the compositor, every ricing tool, the dotfiles that wire it together, and the shortcuts you actually use.</p>
+    <div class="tags">
+      <span class="chip" data-i18n="chip_rolling">Arch Linux (rolling)</span>
+      <span class="chip">Hyprland / Wayland</span>
+      <span class="chip">ASUS ROG Strix G531GU</span>
+      <span class="chip">caelestia-dots</span>
+      <span class="chip" data-i18n="chip_pink">Pink Material You</span>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <a href="#hardware" data-i18n="nav_hardware">Hardware</a>
+    <a href="#os" data-i18n="nav_os">OS &amp; Display</a>
+    <a href="#dotfiles" data-i18n="nav_dotfiles">What are dotfiles?</a>
+    <a href="#rice" data-i18n="nav_rice">Your rice, unpacked</a>
+    <a href="#glossary" data-i18n="nav_glossary">Tool glossary</a>
+    <a href="#theme" data-i18n="nav_theme">Color theme</a>
+    <a href="#editors" data-i18n="nav_editors">Editors &amp; apps</a>
+    <a href="#keys" data-i18n="nav_keys">Keyboard shortcuts</a>
+    <a href="#health" data-i18n="nav_health">System health</a>
+  </nav>
+
+  <section id="hardware">
+    <h2><span class="num">01</span> <span data-i18n="s1_h2">Hardware</span></h2>
+    <p class="lede" data-i18n="s1_lede">What's physically inside the machine this is all running on.</p>
+    <div class="grid">
+      <div class="card"><h3>💻 <span data-i18n="s1_model_title">Model</span></h3><div class="stat">ROG Strix G531GU</div><p data-i18n="s1_model_desc">ASUS gaming laptop, ~2019 vintage</p></div>
+      <div class="card"><h3>🧠 CPU</h3><div class="stat">i7-9750H</div><p data-i18n="s1_cpu_desc">6 cores / 12 threads, up to 4.5GHz</p></div>
+      <div class="card"><h3>🎮 GPU</h3><div class="stat">GTX 1660 Ti</div><p data-i18n="s1_gpu_desc">Nvidia (proprietary driver) + Intel UHD 630 hybrid graphics</p></div>
+      <div class="card"><h3>🗄️ <span data-i18n="s1_mem_title">Memory</span></h3><div class="stat">16 GB</div><p data-i18n="s1_mem_desc">Plus 4GB zram swap</p></div>
+      <div class="card"><h3>💾 <span data-i18n="s1_storage_title">Storage</span></h3><div class="stat">512 GB NVMe</div><p data-i18n="s1_storage_desc">Intel SSD, ext4 root partition</p></div>
+      <div class="card"><h3>🖥️ <span data-i18n="s1_display_title">Display</span></h3><div class="stat">1920×1080 @ 120Hz</div><p data-i18n="s1_display_desc">15.6" built-in panel, no external monitor attached</p></div>
+    </div>
+  </section>
+
+  <section id="os">
+    <h2><span class="num">02</span> <span data-i18n="s2_h2">Operating System &amp; Display Stack</span></h2>
+    <p class="lede" data-i18n="s2_lede">The layers between your hardware and the desktop you see.</p>
+    <div class="tbl-wrap">
+    <table>
+      <tr><th data-i18n="s2_th_layer">Layer</th><th data-i18n="s2_th_running">What you're running</th><th data-i18n="s2_th_does">What it does</th></tr>
+      <tr><td data-i18n="s2_row1_label">Distro</td><td><code>Arch Linux</code> <span data-i18n="s2_row1_running">(rolling release)</span></td><td data-i18n="s2_row1_desc">The base OS — no fixed versions, everything updates continuously via <code>pacman</code>.</td></tr>
+      <tr><td data-i18n="s2_row2_label">Login manager</td><td><code>SDDM</code> <span data-i18n="s2_row2_running">(autologin)</span></td><td data-i18n="s2_row2_desc">The screen that starts your session; set to skip the password prompt and boot straight in.</td></tr>
+      <tr><td data-i18n="s2_row3_label">Compositor / WM</td><td><code>Hyprland</code></td><td data-i18n="s2_row3_desc">Draws every window, handles tiling, animations, and input. This is your desktop environment — there's no GNOME/KDE session running underneath it.</td></tr>
+      <tr><td data-i18n="s2_row4_label">Display protocol</td><td><code>Wayland</code></td><td data-i18n="s2_row4_desc">The modern replacement for X11. Hyprland is a Wayland compositor, which is why things like screen sharing need <code>xdg-desktop-portal-hyprland</code>.</td></tr>
+      <tr><td data-i18n="s2_row5_label">Shell / bar / widgets</td><td><code>Quickshell</code> <span data-i18n="s2_row5_running">(via caelestia)</span></td><td data-i18n="s2_row5_desc">Renders your top bar, sidebar, launcher, notifications, lock screen — all the "desktop environment" chrome that Hyprland itself doesn't provide.</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section id="dotfiles">
+    <h2><span class="num">03</span> <span data-i18n="s3_h2">What are "dotfiles," actually?</span></h2>
+    <p class="lede" data-i18n="s3_lede">The word you keep seeing everywhere in this rice — here's what it means.</p>
+    <div class="callout" data-i18n="s3_callout">
+      <strong>Dotfiles</strong> are config files whose names start with a dot (<code>.bashrc</code>, <code>.gitconfig</code>) — on Linux, a leading dot means "hidden file." Almost every app on Linux reads its settings from a plain text config file instead of a GUI settings panel buried in a database. "My dotfiles" = the collection of these text files that define how your terminal looks, how your window manager behaves, your keybinds, your color scheme — your entire setup, as version-controllable text.
+    </div>
+    <p style="margin-top:14px;" data-i18n="s3_p2">That's why people <em>share</em> dotfiles as GitHub repos, and why you have a folder called <code>caelestia</code> — it's someone else's published dotfiles repo that you installed and are now customizing on top of. Yours live in two places:</p>
+    <div class="tree">
+<span class="dir">~/.config/hypr</span> → symlink → <span class="dir">~/.local/share/caelestia/hypr</span>   <span style="opacity:.6" data-i18n="s3_tree1"># the base rice (caelestia-dots)</span>
+<span class="dir">~/.config/caelestia/</span>hypr-vars.conf          <span style="opacity:.6" data-i18n="s3_tree2"># YOUR overrides (editor, browser, keybinds)</span>
+<span class="dir">~/.config/caelestia/</span>hypr-user.conf          <span style="opacity:.6" data-i18n="s3_tree3"># YOUR extra binds &amp; settings, loaded last</span>
+<span class="dir">~/.config/hypr-profiles/jakoolit/</span>              <span style="opacity:.6" data-i18n="s3_tree4"># a second rice (JaKooLit's) you borrowed pieces from</span>
+    </div>
+  </section>
+
+  <section id="rice">
+    <h2><span class="num">04</span> <span data-i18n="s4_h2">Your rice, unpacked</span></h2>
+    <p class="lede" data-i18n="s4_lede">"Ricing" = customizing a Linux desktop's look and feel. Yours is a base theme with your own tweaks layered on top, so upstream updates don't wipe out your changes.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>🧱 <span data-i18n="s4_card1_title">Base: caelestia-dots</span></h3>
+        <p data-i18n="s4_card1_desc">A full Hyprland + Quickshell config framework. Provides the bar, sidebar, launcher, lock screen, notifications, and a dynamic <strong>Material You</strong> color engine that derives a whole palette from your wallpaper.</p>
+      </div>
+      <div class="card">
+        <h3>🎛️ <span data-i18n="s4_card2_title">Borrowed: JaKooLit profile</span></h3>
+        <p data-i18n="s4_card2_desc">A popular, separate Hyprland dotfiles project. You pulled its keybind style, fastfetch config, and kitty terminal config in via <code>~/.config/hypr-profiles/jakoolit</code>.</p>
+      </div>
+      <div class="card">
+        <h3>✍️ <span data-i18n="s4_card3_title">Your overrides</span></h3>
+        <p data-i18n="s4_card3_desc"><code>hypr-user.conf</code> and <code>hypr-vars.conf</code> in <code>~/.config/caelestia/</code> — this is where <em>your</em> personal choices live (default editor, terminal, browser, extra keybinds) without editing caelestia's own files directly.</p>
+      </div>
+    </div>
+    <p style="margin-top:16px;" class="callout"><strong data-i18n="s4_callout_strong">Why layer it this way?</strong> <span data-i18n="s4_callout_text">Editing caelestia's source files directly would mean losing your changes every time you <code>git pull</code> an update to the base rice. Keeping your personal config in separate override files means the base theme can update cleanly while your customizations persist.</span></p>
+  </section>
+
+  <section id="glossary">
+    <h2><span class="num">05</span> <span data-i18n="s5_h2">Tool glossary</span></h2>
+    <p class="lede" data-i18n="s5_lede">Every unfamiliar name in your config folders, explained in one line each.</p>
+    <dl class="glossary">
+      <dt>Hyprland</dt><dd data-i18n="g_hyprland">The tiling Wayland compositor — your actual window manager. Handles window placement, animations, workspaces, and keybinds.</dd>
+      <dt>Quickshell (qs)</dt><dd data-i18n="g_quickshell">A toolkit for building desktop shells (bars, widgets, launchers) in QML. caelestia's entire visible UI — top bar, sidebar, on-screen-display — is built with it.</dd>
+      <dt>Kvantum</dt><dd data-i18n="g_kvantum">A theme engine for Qt apps (Dolphin, KDE apps, some Discord clients). Yours is set to <code>catppuccin-mocha-blue</code>.</dd>
+      <dt>Breeze</dt><dd data-i18n="g_breeze">KDE's default GTK icon/cursor/widget theme — still active for your GTK apps (file pickers, GTK-based programs) even though you're not running a KDE session.</dd>
+      <dt>fuzzel</dt><dd data-i18n="g_fuzzel">A fast, minimal Wayland application launcher (what pops up to search/run apps).</dd>
+      <dt>cava</dt><dd data-i18n="g_cava">A terminal audio visualizer — those animated bars that react to music.</dd>
+      <dt>OpenRGB</dt><dd data-i18n="g_openrgb">Cross-vendor RGB lighting control, for your ROG laptop's keyboard/chassis lighting.</dd>
+      <dt>nwg-look / nwg-displays</dt><dd data-i18n="g_nwg">GUI tools for setting GTK themes and arranging monitors on wlroots-based compositors like Hyprland.</dd>
+      <dt>spicetify</dt><dd data-i18n="g_spicetify">Lets you re-theme and add plugins to the official Spotify client.</dd>
+      <dt>swappy</dt><dd data-i18n="g_swappy">A quick screenshot annotation tool (crop, draw, blur before saving/copying).</dd>
+      <dt>app2unit</dt><dd data-i18n="g_app2unit">Launches apps as their own systemd transient units instead of plain child processes — keeps resource accounting and cleanup tidier.</dd>
+      <dt>AUR (Arch User Repository)</dt><dd data-i18n="g_aur">A community package repository beyond Arch's official ones. <code>yay</code> and <code>paru</code> (both installed on your system) are "AUR helpers" that build and install from it automatically.</dd>
+      <dt>pacman</dt><dd data-i18n="g_pacman">Arch's native package manager — installs, updates, and removes official packages.</dd>
+    </dl>
+  </section>
+
+  <section id="theme">
+    <h2><span class="num">06</span> <span data-i18n="s6_h2">Your color theme</span></h2>
+    <p class="lede" data-i18n="s6_lede">caelestia generates a full <strong>Material You</strong> palette dynamically — currently locked to a pink/rose scheme, which is also what your freshly-themed VS Code now matches.</p>
+    <div class="swatches">
+      <div class="swatch"><div class="box" style="background:#db2777"></div>primary<br><code>#db2777</code></div>
+      <div class="swatch"><div class="box" style="background:#be185d"></div>secondary<br><code>#be185d</code></div>
+      <div class="swatch"><div class="box" style="background:#9d174d"></div>tertiary<br><code>#9d174d</code></div>
+      <div class="swatch"><div class="box" style="background:#fff1f2; border-color:#e5c6cd"></div>background<br><code>#fff1f2</code></div>
+      <div class="swatch"><div class="box" style="background:#ffe4e6"></div>surface<br><code>#ffe4e6</code></div>
+      <div class="swatch"><div class="box" style="background:#0f172a"></div>on-surface<br><code>#0f172a</code></div>
+      <div class="swatch"><div class="box" style="background:#fbcfe8"></div>rosewater<br><code>#fbcfe8</code></div>
+      <div class="swatch"><div class="box" style="background:#f472b6"></div>flamingo<br><code>#f472b6</code></div>
+    </div>
+    <p style="margin-top:14px; font-size:.9rem; color:var(--text-dim);" data-i18n="s6_p2">Source of truth: <code>~/.local/share/caelestia/hypr/scheme/current.conf</code> — change your wallpaper via <kbd>Super</kbd>+<kbd>W</kbd> and caelestia regenerates this whole palette to match it.</p>
+  </section>
+
+  <section id="editors">
+    <h2><span class="num">07</span> <span data-i18n="s7_h2">Editors &amp; apps you have installed</span></h2>
+    <div class="grid">
+      <div class="card"><h3 data-i18n="s7_card1_title">Code editors</h3><p>VS Code, Cursor, Zed, Antigravity IDE, Code - OSS</p>
+        <div class="badge-row"><span class="badge">Super+C → VS Code</span></div></div>
+      <div class="card"><h3 data-i18n="s7_card2_title">Discord clients</h3><p data-i18n="s7_card2_desc">Vencord, Equicord, BetterDiscord, Legcord — four mod loaders/clients installed at once</p>
+        <div class="badge-row"><span class="badge" data-i18n="s7_badge2">worth picking just one</span></div></div>
+      <div class="card"><h3 data-i18n="s7_card3_title">Terminal</h3><p><code>kitty</code> — <span data-i18n="s7_card3_desc">GPU-accelerated terminal emulator</span></p></div>
+      <div class="card"><h3 data-i18n="s7_card4_title">Browser</h3><p data-i18n="s7_card4_desc">Google Chrome (stable)</p></div>
+    </div>
+  </section>
+
+  <section id="keys">
+    <h2><span class="num">08</span> <span data-i18n="s8_h2">Keyboard shortcuts that matter</span></h2>
+    <div class="tbl-wrap">
+    <table>
+      <tr><th data-i18n="s8_th_shortcut">Shortcut</th><th data-i18n="s8_th_action">Action</th></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>Return</kbd></td><td data-i18n="k1">Open terminal (kitty)</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>C</kbd></td><td data-i18n="k2">Open editor (VS Code)</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>B</kbd></td><td data-i18n="k3">Open browser (Chrome)</td></tr>
+      <tr><td><kbd>Super</kbd> tap</td><td data-i18n="k4">App launcher</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>W</kbd></td><td data-i18n="k5">Wallpaper changer (also regenerates the color scheme)</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>T</kbd></td><td data-i18n="k6">Theme changer</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>L</kbd></td><td data-i18n="k7">Lock screen</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Delete</kbd> <span data-i18n="kw_or">or</span> <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd></td><td data-i18n="k8">Session/power menu (shutdown, reboot, logout)</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>V</kbd></td><td data-i18n="k9">Clipboard history</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd></td><td data-i18n="k10">Region screenshot (freeze)</td></tr>
+      <tr><td><kbd>Print</kbd></td><td data-i18n="k11">Full screenshot → clipboard</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>F</kbd></td><td data-i18n="k12">Toggle floating window</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td data-i18n="k13">Toggle fullscreen</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>1..0</kbd></td><td data-i18n="k14">Go to workspace 1–10</td></tr>
+      <tr><td><kbd>Super</kbd>+<kbd>Shift</kbd>+<kbd>1..0</kbd></td><td data-i18n="k15">Move window to workspace 1–10</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section id="health">
+    <h2><span class="num">09</span> <span data-i18n="s9_h2">System health snapshot</span></h2>
+    <p class="lede" data-i18n="s9_lede">Taken during this review — worth acting on when you get a chance.</p>
+    <div class="grid">
+      <div class="card"><h3>🔄 <span data-i18n="s9_card1_title">Updates</span></h3><div class="stat">732</div><p data-i18n="s9_card1_desc">Pending pacman packages — run <code>pacman -Syu</code></p></div>
+      <div class="card"><h3>🗑️ <span data-i18n="s9_card2_title">Package cache</span></h3><div class="stat">29 GB</div><p data-i18n="s9_card2_desc">Old package versions — <code>paccache -rk2</code> to prune</p></div>
+      <div class="card"><h3>🔋 <span data-i18n="s9_card3_title">Battery health</span></h3><div class="stat">53%</div><p data-i18n="s9_card3_desc">of original design capacity (35Wh / 66Wh) — aging, consider replacement</p></div>
+      <div class="card"><h3>💽 <span data-i18n="s9_card4_title">Disk free</span></h3><div class="stat">167 GB</div><p data-i18n="s9_card4_desc">free on root, 41% used — healthy, plus a 173GB unused NTFS partition</p></div>
+    </div>
+  </section>
+
+  <footer data-i18n="footer">
+    Generated locally by Claude Code from your live system — nothing here was sent anywhere.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var translations = {
+    en: {
+      hero_eyebrow:"System Reference · Generated by Claude Code",
+      hero_h1:"Your Arch Linux + Hyprland Setup, Explained",
+      hero_p:"A plain-language map of everything running on your machine — the OS, the compositor, every ricing tool, the dotfiles that wire it together, and the shortcuts you actually use.",
+      chip_rolling:"Arch Linux (rolling)", chip_pink:"Pink Material You",
+      nav_hardware:"Hardware", nav_os:"OS & Display", nav_dotfiles:"What are dotfiles?", nav_rice:"Your rice, unpacked",
+      nav_glossary:"Tool glossary", nav_theme:"Color theme", nav_editors:"Editors & apps", nav_keys:"Keyboard shortcuts", nav_health:"System health",
+      s1_h2:"Hardware", s1_lede:"What's physically inside the machine this is all running on.",
+      s1_model_title:"Model", s1_model_desc:"ASUS gaming laptop, ~2019 vintage",
+      s1_cpu_desc:"6 cores / 12 threads, up to 4.5GHz",
+      s1_gpu_desc:"Nvidia (proprietary driver) + Intel UHD 630 hybrid graphics",
+      s1_mem_title:"Memory", s1_mem_desc:"Plus 4GB zram swap",
+      s1_storage_title:"Storage", s1_storage_desc:"Intel SSD, ext4 root partition",
+      s1_display_title:"Display", s1_display_desc:"15.6\" built-in panel, no external monitor attached",
+      s2_h2:"Operating System & Display Stack", s2_lede:"The layers between your hardware and the desktop you see.",
+      s2_th_layer:"Layer", s2_th_running:"What you're running", s2_th_does:"What it does",
+      s2_row1_label:"Distro", s2_row1_running:"(rolling release)", s2_row1_desc:"The base OS — no fixed versions, everything updates continuously via pacman.",
+      s2_row2_label:"Login manager", s2_row2_running:"(autologin)", s2_row2_desc:"The screen that starts your session; set to skip the password prompt and boot straight in.",
+      s2_row3_label:"Compositor / WM", s2_row3_desc:"Draws every window, handles tiling, animations, and input. This is your desktop environment — there's no GNOME/KDE session running underneath it.",
+      s2_row4_label:"Display protocol", s2_row4_desc:"The modern replacement for X11. Hyprland is a Wayland compositor, which is why things like screen sharing need xdg-desktop-portal-hyprland.",
+      s2_row5_label:"Shell / bar / widgets", s2_row5_running:"(via caelestia)", s2_row5_desc:"Renders your top bar, sidebar, launcher, notifications, lock screen — all the \"desktop environment\" chrome that Hyprland itself doesn't provide.",
+      s3_h2:'What are "dotfiles," actually?', s3_lede:"The word you keep seeing everywhere in this rice — here's what it means.",
+      s3_callout:'Dotfiles are config files whose names start with a dot (.bashrc, .gitconfig) — on Linux, a leading dot means "hidden file." Almost every app on Linux reads its settings from a plain text config file instead of a GUI settings panel buried in a database. "My dotfiles" = the collection of these text files that define how your terminal looks, how your window manager behaves, your keybinds, your color scheme — your entire setup, as version-controllable text.',
+      s3_p2:"That's why people share dotfiles as GitHub repos, and why you have a folder called caelestia — it's someone else's published dotfiles repo that you installed and are now customizing on top of. Yours live in two places:",
+      s3_tree1:"# the base rice (caelestia-dots)", s3_tree2:"# YOUR overrides (editor, browser, keybinds)",
+      s3_tree3:"# YOUR extra binds & settings, loaded last", s3_tree4:"# a second rice (JaKooLit's) you borrowed pieces from",
+      s4_h2:"Your rice, unpacked", s4_lede:'"Ricing" = customizing a Linux desktop\'s look and feel. Yours is a base theme with your own tweaks layered on top, so upstream updates don\'t wipe out your changes.',
+      s4_card1_title:"Base: caelestia-dots", s4_card1_desc:"A full Hyprland + Quickshell config framework. Provides the bar, sidebar, launcher, lock screen, notifications, and a dynamic Material You color engine that derives a whole palette from your wallpaper.",
+      s4_card2_title:"Borrowed: JaKooLit profile", s4_card2_desc:"A popular, separate Hyprland dotfiles project. You pulled its keybind style, fastfetch config, and kitty terminal config in via ~/.config/hypr-profiles/jakoolit.",
+      s4_card3_title:"Your overrides", s4_card3_desc:"hypr-user.conf and hypr-vars.conf in ~/.config/caelestia/ — this is where your personal choices live (default editor, terminal, browser, extra keybinds) without editing caelestia's own files directly.",
+      s4_callout_strong:"Why layer it this way?", s4_callout_text:"Editing caelestia's source files directly would mean losing your changes every time you git pull an update to the base rice. Keeping your personal config in separate override files means the base theme can update cleanly while your customizations persist.",
+      s5_h2:"Tool glossary", s5_lede:"Every unfamiliar name in your config folders, explained in one line each.",
+      g_hyprland:"The tiling Wayland compositor — your actual window manager. Handles window placement, animations, workspaces, and keybinds.",
+      g_quickshell:"A toolkit for building desktop shells (bars, widgets, launchers) in QML. caelestia's entire visible UI — top bar, sidebar, on-screen-display — is built with it.",
+      g_kvantum:"A theme engine for Qt apps (Dolphin, KDE apps, some Discord clients). Yours is set to catppuccin-mocha-blue.",
+      g_breeze:"KDE's default GTK icon/cursor/widget theme — still active for your GTK apps (file pickers, GTK-based programs) even though you're not running a KDE session.",
+      g_fuzzel:"A fast, minimal Wayland application launcher (what pops up to search/run apps).",
+      g_cava:"A terminal audio visualizer — those animated bars that react to music.",
+      g_openrgb:"Cross-vendor RGB lighting control, for your ROG laptop's keyboard/chassis lighting.",
+      g_nwg:"GUI tools for setting GTK themes and arranging monitors on wlroots-based compositors like Hyprland.",
+      g_spicetify:"Lets you re-theme and add plugins to the official Spotify client.",
+      g_swappy:"A quick screenshot annotation tool (crop, draw, blur before saving/copying).",
+      g_app2unit:"Launches apps as their own systemd transient units instead of plain child processes — keeps resource accounting and cleanup tidier.",
+      g_aur:'A community package repository beyond Arch\'s official ones. yay and paru (both installed on your system) are "AUR helpers" that build and install from it automatically.',
+      g_pacman:"Arch's native package manager — installs, updates, and removes official packages.",
+      s6_h2:"Your color theme", s6_lede:"caelestia generates a full Material You palette dynamically — currently locked to a pink/rose scheme, which is also what your freshly-themed VS Code now matches.",
+      s6_p2:"Source of truth: ~/.local/share/caelestia/hypr/scheme/current.conf — change your wallpaper via Super+W and caelestia regenerates this whole palette to match it.",
+      s7_h2:"Editors & apps you have installed",
+      s7_card1_title:"Code editors", s7_card2_title:"Discord clients", s7_card2_desc:"Vencord, Equicord, BetterDiscord, Legcord — four mod loaders/clients installed at once",
+      s7_badge2:"worth picking just one", s7_card3_title:"Terminal", s7_card3_desc:"GPU-accelerated terminal emulator",
+      s7_card4_title:"Browser", s7_card4_desc:"Google Chrome (stable)",
+      s8_h2:"Keyboard shortcuts that matter", s8_th_shortcut:"Shortcut", s8_th_action:"Action", kw_or:"or",
+      k1:"Open terminal (kitty)", k2:"Open editor (VS Code)", k3:"Open browser (Chrome)", k4:"App launcher",
+      k5:"Wallpaper changer (also regenerates the color scheme)", k6:"Theme changer", k7:"Lock screen",
+      k8:"Session/power menu (shutdown, reboot, logout)", k9:"Clipboard history", k10:"Region screenshot (freeze)",
+      k11:"Full screenshot → clipboard", k12:"Toggle floating window", k13:"Toggle fullscreen",
+      k14:"Go to workspace 1–10", k15:"Move window to workspace 1–10",
+      s9_h2:"System health snapshot", s9_lede:"Taken during this review — worth acting on when you get a chance.",
+      s9_card1_title:"Updates", s9_card1_desc:"Pending pacman packages — run pacman -Syu",
+      s9_card2_title:"Package cache", s9_card2_desc:"Old package versions — paccache -rk2 to prune",
+      s9_card3_title:"Battery health", s9_card3_desc:"of original design capacity (35Wh / 66Wh) — aging, consider replacement",
+      s9_card4_title:"Disk free", s9_card4_desc:"free on root, 41% used — healthy, plus a 173GB unused NTFS partition",
+      footer:"Generated locally by Claude Code from your live system — nothing here was sent anywhere."
+    },
+    th: {
+      hero_eyebrow:"ข้อมูลอ้างอิงระบบ · สร้างโดย Claude Code",
+      hero_h1:"อธิบายการตั้งค่า Arch Linux + Hyprland ของคุณ",
+      hero_p:"แผนที่ภาษาง่ายๆ ของทุกสิ่งที่ทำงานอยู่ในเครื่องของคุณ — OS, compositor, เครื่องมือแต่งไรซ์ทั้งหมด, dotfiles ที่เชื่อมทุกอย่างเข้าด้วยกัน และปุ่มลัดที่คุณใช้จริง",
+      chip_rolling:"Arch Linux (โรลลิ่งรีลีส)", chip_pink:"Pink Material You (ธีมสีชมพู)",
+      nav_hardware:"ฮาร์ดแวร์", nav_os:"OS และจอแสดงผล", nav_dotfiles:"Dotfiles คืออะไร?", nav_rice:"ไรซ์ของคุณ อธิบายทีละส่วน",
+      nav_glossary:"อภิธานศัพท์เครื่องมือ", nav_theme:"ธีมสี", nav_editors:"เอดิเตอร์และแอป", nav_keys:"ปุ่มลัดคีย์บอร์ด", nav_health:"สุขภาพระบบ",
+      s1_h2:"ฮาร์ดแวร์", s1_lede:"สิ่งที่อยู่ภายในเครื่องของคุณจริงๆ",
+      s1_model_title:"รุ่น", s1_model_desc:"โน้ตบุ๊กเกมมิ่งของ ASUS รุ่นประมาณปี 2019",
+      s1_cpu_desc:"6 คอร์ / 12 เธรด สูงสุด 4.5GHz",
+      s1_gpu_desc:"Nvidia (ไดรเวอร์ของแท้) + กราฟิกไฮบริด Intel UHD 630",
+      s1_mem_title:"หน่วยความจำ", s1_mem_desc:"บวกกับ swap แบบ zram 4GB",
+      s1_storage_title:"พื้นที่จัดเก็บ", s1_storage_desc:"SSD ของ Intel พาร์ติชัน root แบบ ext4",
+      s1_display_title:"จอแสดงผล", s1_display_desc:"จอในตัวขนาด 15.6\" ไม่มีต่อจอนอก",
+      s2_h2:"ระบบปฏิบัติการและสแตกการแสดงผล", s2_lede:"ชั้นต่างๆ ระหว่างฮาร์ดแวร์กับเดสก์ท็อปที่คุณเห็น",
+      s2_th_layer:"เลเยอร์", s2_th_running:"สิ่งที่คุณใช้งานอยู่", s2_th_does:"ทำหน้าที่อะไร",
+      s2_row1_label:"ดิสโทร", s2_row1_running:"(โรลลิ่งรีลีส)", s2_row1_desc:"OS พื้นฐาน — ไม่มีเวอร์ชันตายตัว ทุกอย่างอัปเดตต่อเนื่องผ่าน pacman",
+      s2_row2_label:"ตัวจัดการล็อกอิน", s2_row2_running:"(ล็อกอินอัตโนมัติ)", s2_row2_desc:"หน้าจอที่เริ่มเซสชันของคุณ ตั้งค่าให้ข้ามการใส่รหัสผ่านแล้วเข้าเดสก์ท็อปทันที",
+      s2_row3_label:"Compositor / WM", s2_row3_desc:"วาดหน้าต่างทุกบาน จัดการการเรียงหน้าต่าง แอนิเมชัน และอินพุต นี่คือเดสก์ท็อปเอนไวรอนเมนต์ของคุณ — ไม่มีเซสชัน GNOME/KDE ทำงานอยู่ข้างใต้",
+      s2_row4_label:"โปรโตคอลการแสดงผล", s2_row4_desc:"ตัวแทนยุคใหม่ของ X11 Hyprland เป็น Wayland compositor จึงเป็นเหตุผลที่การแชร์หน้าจอต้องใช้ xdg-desktop-portal-hyprland",
+      s2_row5_label:"เชลล์ / บาร์ / วิดเจ็ต", s2_row5_running:"(ผ่าน caelestia)", s2_row5_desc:'เรนเดอร์แถบด้านบน, ไซด์บาร์, ตัวเปิดแอป, การแจ้งเตือน, หน้าจอล็อก — ส่วนติดต่อ "เดสก์ท็อปเอนไวรอนเมนต์" ทั้งหมดที่ Hyprland เองไม่ได้มีให้',
+      s3_h2:'"Dotfiles" คืออะไรกันแน่?', s3_lede:"คำที่คุณเห็นอยู่ทุกที่ในไรซ์นี้ — นี่คือความหมายของมัน",
+      s3_callout:'Dotfiles คือไฟล์การตั้งค่าที่ชื่อขึ้นต้นด้วยจุด (.bashrc, .gitconfig) — บน Linux จุดนำหน้าหมายถึง "ไฟล์ซ่อน" แอปเกือบทุกตัวบน Linux อ่านการตั้งค่าจากไฟล์ข้อความธรรมดา แทนที่จะเป็นหน้าตั้งค่าแบบ GUI ที่ซ่อนอยู่ในฐานข้อมูล "Dotfiles ของฉัน" = ชุดไฟล์ข้อความเหล่านี้ที่กำหนดว่าเทอร์มินัลของคุณหน้าตาเป็นอย่างไร window manager ทำงานอย่างไร ปุ่มลัดของคุณ ธีมสีของคุณ — การตั้งค่าทั้งหมดของคุณ ในรูปแบบข้อความที่ควบคุมเวอร์ชันได้',
+      s3_p2:"นี่คือเหตุผลที่คนแชร์ dotfiles เป็น GitHub repo และเหตุผลที่คุณมีโฟลเดอร์ชื่อ caelestia — มันคือ dotfiles repo ที่คนอื่นเผยแพร่ไว้ซึ่งคุณติดตั้งแล้วกำลังปรับแต่งต่อยอดอยู่ ของคุณอยู่ใน 2 ที่:",
+      s3_tree1:"# ไรซ์พื้นฐาน (caelestia-dots)", s3_tree2:"# การปรับแต่งของคุณ (เอดิเตอร์, เบราว์เซอร์, ปุ่มลัด)",
+      s3_tree3:"# ปุ่มลัดและการตั้งค่าเพิ่มเติมของคุณ โหลดเป็นลำดับสุดท้าย", s3_tree4:"# ไรซ์ที่สอง (ของ JaKooLit) ที่คุณหยิบบางส่วนมาใช้",
+      s4_h2:"ไรซ์ของคุณ อธิบายทีละส่วน", s4_lede:'"Ricing" = การปรับแต่งหน้าตาและความรู้สึกของเดสก์ท็อป Linux ของคุณคือธีมพื้นฐานที่มีการปรับแต่งของคุณเองซ้อนทับอยู่ เพื่อให้อัปเดตจากต้นทางไม่ลบการเปลี่ยนแปลงของคุณทิ้ง',
+      s4_card1_title:"พื้นฐาน: caelestia-dots", s4_card1_desc:"เฟรมเวิร์กการตั้งค่า Hyprland + Quickshell แบบเต็มรูปแบบ มีแถบบาร์ ไซด์บาร์ ตัวเปิดแอป หน้าจอล็อก การแจ้งเตือน และเอนจินสี Material You แบบไดนามิกที่สร้างพาเลตทั้งหมดจากวอลเปเปอร์ของคุณ",
+      s4_card2_title:"ยืมมา: โปรไฟล์ JaKooLit", s4_card2_desc:"โปรเจกต์ dotfiles ของ Hyprland ที่แยกต่างหากและเป็นที่นิยม คุณดึงสไตล์ปุ่มลัด การตั้งค่า fastfetch และการตั้งค่าเทอร์มินัล kitty มาผ่าน ~/.config/hypr-profiles/jakoolit",
+      s4_card3_title:"การปรับแต่งของคุณ", s4_card3_desc:"hypr-user.conf และ hypr-vars.conf ใน ~/.config/caelestia/ — นี่คือที่ที่ตัวเลือกส่วนตัวของคุณอยู่ (เอดิเตอร์เริ่มต้น, เทอร์มินัล, เบราว์เซอร์, ปุ่มลัดเพิ่มเติม) โดยไม่ต้องแก้ไฟล์ต้นฉบับของ caelestia โดยตรง",
+      s4_callout_strong:"ทำไมต้องแยกชั้นแบบนี้?", s4_callout_text:"การแก้ไฟล์ต้นฉบับของ caelestia โดยตรงจะทำให้การเปลี่ยนแปลงของคุณหายไปทุกครั้งที่ git pull อัปเดตไรซ์พื้นฐาน การเก็บการตั้งค่าส่วนตัวไว้ในไฟล์แยกต่างหากทำให้ธีมพื้นฐานอัปเดตได้อย่างราบรื่น ในขณะที่การปรับแต่งของคุณยังคงอยู่",
+      s5_h2:"อภิธานศัพท์เครื่องมือ", s5_lede:"ชื่อที่ไม่คุ้นเคยทุกชื่อในโฟลเดอร์การตั้งค่าของคุณ อธิบายทีละบรรทัด",
+      g_hyprland:"Wayland compositor แบบ tiling — window manager ตัวจริงของคุณ จัดการตำแหน่งหน้าต่าง แอนิเมชัน เวิร์กสเปซ และปุ่มลัด",
+      g_quickshell:"ชุดเครื่องมือสำหรับสร้างเชลล์เดสก์ท็อป (บาร์, วิดเจ็ต, ตัวเปิดแอป) ด้วย QML ส่วนติดต่อทั้งหมดที่มองเห็นได้ของ caelestia — แถบบน, ไซด์บาร์, การแสดงผลบนหน้าจอ — สร้างด้วยเครื่องมือนี้",
+      g_kvantum:"เอนจินธีมสำหรับแอป Qt (Dolphin, แอป KDE, Discord บางไคลเอนต์) ของคุณตั้งเป็น catppuccin-mocha-blue",
+      g_breeze:"ธีมไอคอน/เคอร์เซอร์/วิดเจ็ต GTK เริ่มต้นของ KDE ยังทำงานอยู่กับแอป GTK ของคุณ (ตัวเลือกไฟล์, โปรแกรม GTK) แม้ว่าคุณจะไม่ได้รันเซสชัน KDE ก็ตาม",
+      g_fuzzel:"ตัวเปิดแอปพลิเคชันบน Wayland ที่รวดเร็วและเรียบง่าย (สิ่งที่เด้งขึ้นมาให้ค้นหา/รันแอป)",
+      g_cava:"ตัวแสดงภาพเสียงบนเทอร์มินัล — แท่งแอนิเมชันที่ขยับตามเพลง",
+      g_openrgb:"การควบคุมไฟ RGB ข้ามยี่ห้อ สำหรับไฟคีย์บอร์ด/ตัวเครื่องของโน้ตบุ๊ก ROG ของคุณ",
+      g_nwg:"เครื่องมือ GUI สำหรับตั้งธีม GTK และจัดวางจอภาพบน compositor แบบ wlroots อย่าง Hyprland",
+      g_spicetify:"ให้คุณปรับธีมและเพิ่มปลั๊กอินให้กับไคลเอนต์ Spotify ทางการ",
+      g_swappy:"เครื่องมือใส่คำอธิบายภาพหน้าจอแบบเร็ว (ครอป, วาด, เบลอ ก่อนบันทึก/คัดลอก)",
+      g_app2unit:"เปิดแอปเป็น systemd transient unit ของตัวเองแทนที่จะเป็น child process ธรรมดา — ทำให้การนับทรัพยากรและการเคลียร์เป็นระเบียบมากขึ้น",
+      g_aur:'ที่เก็บแพ็กเกจของชุมชนนอกเหนือจากที่เก็บทางการของ Arch yay และ paru (ติดตั้งอยู่ในเครื่องของคุณทั้งคู่) เป็น "ตัวช่วย AUR" ที่ build และติดตั้งจากมันโดยอัตโนมัติ',
+      g_pacman:"ตัวจัดการแพ็กเกจดั้งเดิมของ Arch — ติดตั้ง อัปเดต และลบแพ็กเกจทางการ",
+      s6_h2:"ธีมสีของคุณ", s6_lede:"caelestia สร้างพาเลต Material You แบบเต็มรูปแบบแบบไดนามิก — ตอนนี้ล็อกไว้ที่โทนสีชมพู/กุหลาบ ซึ่งตรงกับ VS Code ที่เพิ่งปรับธีมของคุณด้วย",
+      s6_p2:"แหล่งข้อมูลจริง: ~/.local/share/caelestia/hypr/scheme/current.conf — เปลี่ยนวอลเปเปอร์ด้วย Super+W แล้ว caelestia จะสร้างพาเลตทั้งหมดใหม่ให้ตรงกัน",
+      s7_h2:"เอดิเตอร์และแอปที่คุณติดตั้งไว้",
+      s7_card1_title:"เอดิเตอร์โค้ด", s7_card2_title:"ไคลเอนต์ Discord", s7_card2_desc:"Vencord, Equicord, BetterDiscord, Legcord — โมดโหลดเดอร์/ไคลเอนต์ 4 ตัวติดตั้งพร้อมกัน",
+      s7_badge2:"ควรเลือกใช้แค่ตัวเดียว", s7_card3_title:"เทอร์มินัล", s7_card3_desc:"เทอร์มินัลอีมูเลเตอร์ที่เร่งความเร็วด้วย GPU",
+      s7_card4_title:"เบราว์เซอร์", s7_card4_desc:"Google Chrome (สเตเบิล)",
+      s8_h2:"ปุ่มลัดคีย์บอร์ดที่สำคัญ", s8_th_shortcut:"ปุ่มลัด", s8_th_action:"การทำงาน", kw_or:"หรือ",
+      k1:"เปิดเทอร์มินัล (kitty)", k2:"เปิดเอดิเตอร์ (VS Code)", k3:"เปิดเบราว์เซอร์ (Chrome)", k4:"ตัวเปิดแอป",
+      k5:"ตัวเปลี่ยนวอลเปเปอร์ (สร้างธีมสีใหม่ด้วย)", k6:"ตัวเปลี่ยนธีม", k7:"ล็อกหน้าจอ",
+      k8:"เมนูเซสชัน/ปิดเครื่อง (ปิดเครื่อง, รีสตาร์ท, ออกจากระบบ)", k9:"ประวัติคลิปบอร์ด", k10:"แคปหน้าจอเฉพาะส่วน (หยุดภาพนิ่ง)",
+      k11:"แคปหน้าจอเต็มจอ → คลิปบอร์ด", k12:"สลับหน้าต่างแบบลอย", k13:"สลับเต็มจอ",
+      k14:"ไปที่เวิร์กสเปซ 1–10", k15:"ย้ายหน้าต่างไปเวิร์กสเปซ 1–10",
+      s9_h2:"ภาพรวมสุขภาพระบบ", s9_lede:"เก็บข้อมูลระหว่างการตรวจสอบนี้ — ควรจัดการเมื่อมีเวลา",
+      s9_card1_title:"การอัปเดต", s9_card1_desc:"แพ็กเกจ pacman ที่รอดำเนินการ — รัน pacman -Syu",
+      s9_card2_title:"แคชแพ็กเกจ", s9_card2_desc:"เวอร์ชันแพ็กเกจเก่า — ใช้ paccache -rk2 เพื่อล้าง",
+      s9_card3_title:"สุขภาพแบตเตอรี่", s9_card3_desc:"จากความจุออกแบบเดิม (35Wh / 66Wh) — เสื่อมแล้ว ควรพิจารณาเปลี่ยน",
+      s9_card4_title:"พื้นที่ดิสก์ว่าง", s9_card4_desc:"ว่างบน root ใช้ไป 41% — ปกติดี บวกกับพาร์ติชัน NTFS ที่ไม่ได้ใช้ 173GB",
+      footer:"สร้างขึ้นในเครื่องโดย Claude Code จากระบบจริงของคุณ — ไม่มีข้อมูลใดถูกส่งออกไปที่ไหนเลย"
+    },
+    la: {
+      hero_eyebrow:"ຂໍ້ມູນອ້າງອີງລະບົບ · ສ້າງໂດຍ Claude Code",
+      hero_h1:"ອະທິບາຍການຕັ້ງຄ່າ Arch Linux + Hyprland ຂອງເຈົ້າ",
+      hero_p:"ແຜນທີ່ພາສາງ່າຍໆ ຂອງທຸກຢ່າງທີ່ເຮັດວຽກຢູ່ໃນເຄື່ອງຂອງເຈົ້າ — OS, compositor, ເຄື່ອງມືແຕ່ງ rice ທັງໝົດ, dotfiles ທີ່ເຊື່ອມທຸກຢ່າງເຂົ້າກັນ, ແລະ ປຸ່ມລັດທີ່ເຈົ້າໃຊ້ແທ້ໆ",
+      chip_rolling:"Arch Linux (rolling release)", chip_pink:"Pink Material You (ຮູບແບບສີບົວ)",
+      nav_hardware:"ຮາດແວ", nav_os:"OS ແລະ ຈໍສະແດງຜົນ", nav_dotfiles:"Dotfiles ແມ່ນຫຍັງ?", nav_rice:"Rice ຂອງເຈົ້າ ອະທິບາຍເທື່ອລະສ່ວນ",
+      nav_glossary:"ປະມວນສັບເຄື່ອງມື", nav_theme:"ຮູບແບບສີ", nav_editors:"ໂປຣແກຣມແກ້ໄຂ ແລະ ແອັບ", nav_keys:"ປຸ່ມລັດແປ້ນພິມ", nav_health:"ສຸຂະພາບລະບົບ",
+      s1_h2:"ຮາດແວ", s1_lede:"ສິ່ງທີ່ຢູ່ພາຍໃນເຄື່ອງນີ້ແທ້ໆ",
+      s1_model_title:"ລຸ້ນ", s1_model_desc:"ໂນດບຸກເກມມິ່ງຂອງ ASUS ປະມານປີ 2019",
+      s1_cpu_desc:"6 core / 12 thread, ສູງສຸດ 4.5GHz",
+      s1_gpu_desc:"Nvidia (ໄດຣເວີແທ້) + ກຣາຟິກ hybrid Intel UHD 630",
+      s1_mem_title:"ໜ່ວຍຄວາມຈຳ", s1_mem_desc:"ບວກກັບ zram swap 4GB",
+      s1_storage_title:"ບ່ອນເກັບຂໍ້ມູນ", s1_storage_desc:"SSD ຂອງ Intel, partition root ແບບ ext4",
+      s1_display_title:"ຈໍສະແດງຜົນ", s1_display_desc:"ຈໍໃນຕົວຂະໜາດ 15.6\" ບໍ່ໄດ້ຕໍ່ຈໍນອກ",
+      s2_h2:"ລະບົບປະຕິບັດການ ແລະ ໂຄງສ້າງການສະແດງຜົນ", s2_lede:"ຊັ້ນຕ່າງໆ ລະຫວ່າງຮາດແວ ກັບ desktop ທີ່ເຈົ້າເຫັນ",
+      s2_th_layer:"ຊັ້ນ", s2_th_running:"ສິ່ງທີ່ເຈົ້າກຳລັງໃຊ້", s2_th_does:"ເຮັດໜ້າທີ່ຫຍັງ",
+      s2_row1_label:"Distro", s2_row1_running:"(rolling release)", s2_row1_desc:"OS ພື້ນຖານ — ບໍ່ມີເວີຊັນຕາຍຕົວ, ທຸກຢ່າງອັບເດດຢ່າງຕໍ່ເນື່ອງຜ່ານ pacman",
+      s2_row2_label:"ໂປຣແກຣມຈັດການລັອກອິນ", s2_row2_running:"(ລັອກອິນອັດຕະໂນມັດ)", s2_row2_desc:"ໜ້າຈໍທີ່ເລີ່ມເຊດຊັນຂອງເຈົ້າ; ຕັ້ງໃຫ້ຂ້າມການໃສ່ລະຫັດຜ່ານແລ້ວເຂົ້າ desktop ທັນທີ",
+      s2_row3_label:"Compositor / WM", s2_row3_desc:"ແຕ້ມທຸກໜ້າຕ່າງ, ຈັດການການວາງໜ້າຕ່າງ, ອານິເມຊັນ, ແລະ ອິນພຸດ. ນີ້ຄື desktop environment ຂອງເຈົ້າ — ບໍ່ມີເຊດຊັນ GNOME/KDE ເຮັດວຽກຢູ່ດ້ານລຸ່ມ",
+      s2_row4_label:"ໂປຣໂຕຄອນການສະແດງຜົນ", s2_row4_desc:"ຕົວແທນຍຸກໃໝ່ຂອງ X11. Hyprland ເປັນ Wayland compositor, ຈຶ່ງເປັນເຫດຜົນທີ່ການແຊຣ໌ໜ້າຈໍຕ້ອງໃຊ້ xdg-desktop-portal-hyprland",
+      s2_row5_label:"Shell / bar / widget", s2_row5_running:"(ຜ່ານ caelestia)", s2_row5_desc:'ສະແດງແຖບເທິງ, sidebar, ຕົວເປີດແອັບ, ການແຈ້ງເຕືອນ, ໜ້າຈໍລັອກ — ສ່ວນຕິດຕໍ່ "desktop environment" ທັງໝົດທີ່ Hyprland ເອງບໍ່ໄດ້ມີໃຫ້',
+      s3_h2:'"Dotfiles" ແທ້ໆແລ້ວແມ່ນຫຍັງ?', s3_lede:"ຄຳສັບທີ່ເຈົ້າເຫັນຢູ່ທົ່ວທຸກບ່ອນໃນ rice ນີ້ — ນີ້ຄືຄວາມໝາຍຂອງມັນ",
+      s3_callout:'Dotfiles ແມ່ນໄຟລ໌ຕັ້ງຄ່າທີ່ຊື່ຂຶ້ນຕົ້ນດ້ວຍຈຸດ (.bashrc, .gitconfig) — ໃນ Linux, ຈຸດນຳໜ້າໝາຍເຖິງ "ໄຟລ໌ເຊື່ອງ" ເກືອບທຸກແອັບໃນ Linux ອ່ານການຕັ້ງຄ່າຈາກໄຟລ໌ຂໍ້ຄວາມທຳມະດາ ແທນທີ່ຈະເປັນໜ້າຕັ້ງຄ່າແບບ GUI ທີ່ຝັງຢູ່ໃນຖານຂໍ້ມູນ. "Dotfiles ຂອງຂ້ອຍ" = ຊຸດໄຟລ໌ຂໍ້ຄວາມເຫຼົ່ານີ້ທີ່ກຳນົດວ່າ terminal ຂອງເຈົ້າໜ້າຕາເປັນແນວໃດ, window manager ເຮັດວຽກແນວໃດ, ປຸ່ມລັດຂອງເຈົ້າ, ຮູບແບບສີຂອງເຈົ້າ — ການຕັ້ງຄ່າທັງໝົດຂອງເຈົ້າ ໃນຮູບແບບຂໍ້ຄວາມທີ່ຄວບຄຸມເວີຊັນໄດ້',
+      s3_p2:"ນີ້ຄືເຫດຜົນທີ່ຄົນແຊຣ໌ dotfiles ເປັນ GitHub repo, ແລະ ເຫດຜົນທີ່ເຈົ້າມີໂຟນເດີຊື່ caelestia — ມັນຄື dotfiles repo ຂອງຄົນອື່ນທີ່ເຜີຍແຜ່ໄວ້ ຊຶ່ງເຈົ້າຕິດຕັ້ງແລ້ວກຳລັງປັບແຕ່ງຕໍ່ຍອດຢູ່. ຂອງເຈົ້າຢູ່ໃນ 2 ບ່ອນ:",
+      s3_tree1:"# ໄຣຊ໌ພື້ນຖານ (caelestia-dots)", s3_tree2:"# ການປັບແຕ່ງຂອງເຈົ້າ (ເອດິເຕີ, browser, ປຸ່ມລັດ)",
+      s3_tree3:"# ປຸ່ມລັດ ແລະ ການຕັ້ງຄ່າເພີ່ມເຕີມຂອງເຈົ້າ, ໂຫຼດເປັນອັນສຸດທ້າຍ", s3_tree4:"# ໄຣຊ໌ທີສອງ (ຂອງ JaKooLit) ທີ່ເຈົ້າຢືມບາງສ່ວນມາໃຊ້",
+      s4_h2:"Rice ຂອງເຈົ້າ ອະທິບາຍເທື່ອລະສ່ວນ", s4_lede:'"Ricing" = ການປັບແຕ່ງໜ້າຕາ ແລະ ຄວາມຮູ້ສຶກຂອງ desktop Linux. ຂອງເຈົ້າແມ່ນ theme ພື້ນຖານທີ່ມີການປັບແຕ່ງຂອງເຈົ້າເອງຊ້ອນທັບຢູ່, ເພື່ອໃຫ້ການອັບເດດຈາກຕົ້ນທາງບໍ່ລຶບການປ່ຽນແປງຂອງເຈົ້າຖິ້ມ',
+      s4_card1_title:"ພື້ນຖານ: caelestia-dots", s4_card1_desc:"framework ການຕັ້ງຄ່າ Hyprland + Quickshell ແບບເຕັມຮູບແບບ. ມີແຖບບາ, sidebar, ຕົວເປີດແອັບ, ໜ້າຈໍລັອກ, ການແຈ້ງເຕືອນ, ແລະ engine ສີ Material You ແບບໄດນາມິກທີ່ສ້າງ palette ທັງໝົດຈາກ wallpaper ຂອງເຈົ້າ",
+      s4_card2_title:"ຢືມມາ: profile ຂອງ JaKooLit", s4_card2_desc:"ໂປຣເຈັກ dotfiles ຂອງ Hyprland ທີ່ແຍກຕ່າງຫາກ ແລະ ເປັນທີ່ນິຍົມ. ເຈົ້າດຶງສະໄຕລ໌ປຸ່ມລັດ, ການຕັ້ງຄ່າ fastfetch, ແລະ ການຕັ້ງຄ່າ terminal kitty ມາຜ່ານ ~/.config/hypr-profiles/jakoolit",
+      s4_card3_title:"ການປັບແຕ່ງຂອງເຈົ້າ", s4_card3_desc:"hypr-user.conf ແລະ hypr-vars.conf ໃນ ~/.config/caelestia/ — ນີ້ຄືບ່ອນທີ່ທາງເລືອກສ່ວນຕົວຂອງເຈົ້າຢູ່ (ເອດິເຕີເລີ່ມຕົ້ນ, terminal, browser, ປຸ່ມລັດເພີ່ມເຕີມ) ໂດຍບໍ່ຕ້ອງແກ້ໄຟລ໌ຕົ້ນສະບັບຂອງ caelestia ໂດຍກົງ",
+      s4_callout_strong:"ເປັນຫຍັງຕ້ອງແຍກຊັ້ນແບບນີ້?", s4_callout_text:"ການແກ້ໄຟລ໌ຕົ້ນສະບັບຂອງ caelestia ໂດຍກົງ ຈະເຮັດໃຫ້ການປ່ຽນແປງຂອງເຈົ້າຫາຍໄປທຸກຄັ້ງທີ່ git pull ອັບເດດ rice ພື້ນຖານ. ການເກັບການຕັ້ງຄ່າສ່ວນຕົວໄວ້ໃນໄຟລ໌ແຍກຕ່າງຫາກ ເຮັດໃຫ້ theme ພື້ນຖານອັບເດດໄດ້ຢ່າງລຽບງ່າຍ ໃນຂະນະທີ່ການປັບແຕ່ງຂອງເຈົ້າຍັງຄົງຢູ່",
+      s5_h2:"ປະມວນສັບເຄື່ອງມື", s5_lede:"ທຸກຊື່ທີ່ບໍ່ຄຸ້ນເຄີຍໃນໂຟນເດີການຕັ້ງຄ່າຂອງເຈົ້າ, ອະທິບາຍເທື່ອລະແຖວ",
+      g_hyprland:"Wayland compositor ແບບ tiling — window manager ແທ້ຈິງຂອງເຈົ້າ. ຈັດການຕຳແໜ່ງໜ້າຕ່າງ, ອານິເມຊັນ, workspace, ແລະ ປຸ່ມລັດ",
+      g_quickshell:"ຊຸດເຄື່ອງມືສຳລັບສ້າງ desktop shell (bar, widget, ຕົວເປີດແອັບ) ດ້ວຍ QML. ສ່ວນຕິດຕໍ່ທັງໝົດທີ່ເຫັນໄດ້ຂອງ caelestia — ແຖບເທິງ, sidebar, on-screen-display — ສ້າງດ້ວຍເຄື່ອງມືນີ້",
+      g_kvantum:"engine theme ສຳລັບແອັບ Qt (Dolphin, ແອັບ KDE, Discord client ບາງຕົວ). ຂອງເຈົ້າຕັ້ງເປັນ catppuccin-mocha-blue",
+      g_breeze:"theme ໄອຄອນ/cursor/widget GTK ເລີ່ມຕົ້ນຂອງ KDE — ຍັງເຮັດວຽກຢູ່ກັບແອັບ GTK ຂອງເຈົ້າ (ຕົວເລືອກໄຟລ໌, ໂປຣແກຣມ GTK) ເຖິງແມ່ນວ່າເຈົ້າບໍ່ໄດ້ແລ່ນເຊດຊັນ KDE",
+      g_fuzzel:"ຕົວເປີດແອັບພລິເຄຊັນເທິງ Wayland ທີ່ໄວ ແລະ ຮຽບງ່າຍ (ສິ່ງທີ່ເດ້ງຂຶ້ນມາໃຫ້ຄົ້ນຫາ/ແລ່ນແອັບ)",
+      g_cava:"ຕົວສະແດງພາບສຽງເທິງ terminal — ແທ່ງອານິເມຊັນທີ່ຂະຍັບຕາມເພງ",
+      g_openrgb:"ການຄວບຄຸມໄຟ RGB ຂ້າມຍີ່ຫໍ້, ສຳລັບໄຟແປ້ນພິມ/ໂຄງຂອງໂນດບຸກ ROG ຂອງເຈົ້າ",
+      g_nwg:"ເຄື່ອງມື GUI ສຳລັບຕັ້ງ theme GTK ແລະ ຈັດວາງຈໍພາບເທິງ compositor ແບບ wlroots ເຊັ່ນ Hyprland",
+      g_spicetify:"ໃຫ້ເຈົ້າປັບ theme ແລະ ເພີ່ມ plugin ໃຫ້ກັບ Spotify client ທາງການ",
+      g_swappy:"ເຄື່ອງມືໃສ່ຄຳອະທິບາຍພາບໜ້າຈໍແບບໄວ (crop, ແຕ້ມ, ເບີກ ກ່ອນບັນທຶກ/copy)",
+      g_app2unit:"ເປີດແອັບເປັນ systemd transient unit ຂອງມັນເອງ ແທນທີ່ຈະເປັນ child process ທຳມະດາ — ເຮັດໃຫ້ການນັບຊັບພະຍາກອນ ແລະ ການລ້າງເປັນລະບຽບຫຼາຍຂຶ້ນ",
+      g_aur:'ບ່ອນເກັບ package ຂອງຊຸມຊົນ ນອກເໜືອຈາກບ່ອນເກັບທາງການຂອງ Arch. yay ແລະ paru (ຕິດຕັ້ງຢູ່ໃນເຄື່ອງຂອງເຈົ້າທັງສອງ) ເປັນ "ຕົວຊ່ວຍ AUR" ທີ່ build ແລະ ຕິດຕັ້ງຈາກມັນອັດຕະໂນມັດ',
+      g_pacman:"ຕົວຈັດການ package ດັ້ງເດີມຂອງ Arch — ຕິດຕັ້ງ, ອັບເດດ, ແລະ ລຶບ package ທາງການ",
+      s6_h2:"ຮູບແບບສີຂອງເຈົ້າ", s6_lede:"caelestia ສ້າງ palette Material You ແບບເຕັມຮູບແບບແບບໄດນາມິກ — ຕອນນີ້ລັອກໄວ້ທີ່ໂທນສີບົວ/ກຸຫຼາບ, ຊຶ່ງກົງກັບ VS Code ທີ່ຫາກໍປັບ theme ຂອງເຈົ້າດ້ວຍ",
+      s6_p2:"ແຫຼ່ງຂໍ້ມູນຈິງ: ~/.local/share/caelestia/hypr/scheme/current.conf — ປ່ຽນ wallpaper ດ້ວຍ Super+W ແລ້ວ caelestia ຈະສ້າງ palette ທັງໝົດໃໝ່ໃຫ້ກົງກັນ",
+      s7_h2:"ເອດິເຕີ ແລະ ແອັບທີ່ເຈົ້າຕິດຕັ້ງໄວ້",
+      s7_card1_title:"ເອດິເຕີໂຄ້ດ", s7_card2_title:"Discord client", s7_card2_desc:"Vencord, Equicord, BetterDiscord, Legcord — mod loader/client 4 ໂຕຕິດຕັ້ງພ້ອມກັນ",
+      s7_badge2:"ຄວນເລືອກໃຊ້ພຽງໂຕດຽວ", s7_card3_title:"Terminal", s7_card3_desc:"terminal emulator ທີ່ເລັ່ງດ້ວຍ GPU",
+      s7_card4_title:"Browser", s7_card4_desc:"Google Chrome (stable)",
+      s8_h2:"ປຸ່ມລັດແປ້ນພິມທີ່ສຳຄັນ", s8_th_shortcut:"ປຸ່ມລັດ", s8_th_action:"ການເຮັດວຽກ", kw_or:"ຫຼື",
+      k1:"ເປີດ terminal (kitty)", k2:"ເປີດເອດິເຕີ (VS Code)", k3:"ເປີດ browser (Chrome)", k4:"ຕົວເປີດແອັບ",
+      k5:"ຕົວປ່ຽນ wallpaper (ສ້າງຮູບແບບສີໃໝ່ນຳ)", k6:"ຕົວປ່ຽນ theme", k7:"ລັອກໜ້າຈໍ",
+      k8:"ເມນູເຊດຊັນ/ປິດເຄື່ອງ (ປິດເຄື່ອງ, restart, ອອກຈາກລະບົບ)", k9:"ປະຫວັດ clipboard", k10:"ແຄບໜ້າຈໍສະເພາະສ່ວນ (ຢຸດພາບນິ່ງ)",
+      k11:"ແຄບໜ້າຈໍເຕັມ → clipboard", k12:"ສະຫຼັບໜ້າຕ່າງແບບລອຍ", k13:"ສະຫຼັບເຕັມຈໍ",
+      k14:"ໄປທີ່ workspace 1–10", k15:"ຍ້າຍໜ້າຕ່າງໄປ workspace 1–10",
+      s9_h2:"ພາບລວມສຸຂະພາບລະບົບ", s9_lede:"ເກັບຂໍ້ມູນໃນລະຫວ່າງການກວດສອບນີ້ — ຄວນຈັດການເມື່ອມີເວລາ",
+      s9_card1_title:"ການອັບເດດ", s9_card1_desc:"package pacman ທີ່ລໍຖ້າດຳເນີນການ — ແລ່ນ pacman -Syu",
+      s9_card2_title:"Cache ຂອງ package", s9_card2_desc:"ເວີຊັນ package ເກົ່າ — ໃຊ້ paccache -rk2 ເພື່ອລ້າງ",
+      s9_card3_title:"ສຸຂະພາບແບັດເຕີຣີ", s9_card3_desc:"ຈາກຄວາມຈຸອອກແບບເດີມ (35Wh / 66Wh) — ເສື່ອມແລ້ວ, ຄວນພິຈາລະນາປ່ຽນ",
+      s9_card4_title:"ພື້ນທີ່ດິສກ໌ວ່າງ", s9_card4_desc:"ວ່າງເທິງ root, ໃຊ້ໄປ 41% — ປົກກະຕິດີ, ບວກກັບ partition NTFS ທີ່ບໍ່ໄດ້ໃຊ້ 173GB",
+      footer:"ສ້າງຂຶ້ນຢູ່ໃນເຄື່ອງໂດຍ Claude Code ຈາກລະບົບຈິງຂອງເຈົ້າ — ບໍ່ມີຂໍ້ມູນໃດຖືກສົ່ງອອກໄປໃສເລີຍ"
+    },
+    ja: {
+      hero_eyebrow:"システムリファレンス · Claude Code 生成",
+      hero_h1:"あなたのArch Linux + Hyprland環境を解説",
+      hero_p:"マシン上で動いているすべてのもの——OS、コンポジタ、あらゆるriceツール、それらをつなぐdotfiles、そして実際に使っているショートカット——をわかりやすくまとめたマップです。",
+      chip_rolling:"Arch Linux（ローリングリリース）", chip_pink:"Pink Material You（ピンクのテーマ）",
+      nav_hardware:"ハードウェア", nav_os:"OSとディスプレイ", nav_dotfiles:"dotfilesとは?", nav_rice:"あなたのriceを解説",
+      nav_glossary:"ツール用語集", nav_theme:"カラーテーマ", nav_editors:"エディタとアプリ", nav_keys:"キーボードショートカット", nav_health:"システムの状態",
+      s1_h2:"ハードウェア", s1_lede:"このマシンの中に実際に入っているもの。",
+      s1_model_title:"モデル", s1_model_desc:"ASUSのゲーミングノートPC、2019年頃のモデル",
+      s1_cpu_desc:"6コア / 12スレッド、最大4.5GHz",
+      s1_gpu_desc:"Nvidia（プロプライエタリドライバ）+ Intel UHD 630のハイブリッドグラフィックス",
+      s1_mem_title:"メモリ", s1_mem_desc:"さらにzram swap 4GB",
+      s1_storage_title:"ストレージ", s1_storage_desc:"Intel製SSD、ext4のrootパーティション",
+      s1_display_title:"ディスプレイ", s1_display_desc:"15.6インチ内蔵パネル、外部モニタは未接続",
+      s2_h2:"オペレーティングシステムとディスプレイスタック", s2_lede:"ハードウェアと、あなたが見ているデスクトップの間にあるレイヤー。",
+      s2_th_layer:"レイヤー", s2_th_running:"使用しているもの", s2_th_does:"役割",
+      s2_row1_label:"ディストリビューション", s2_row1_running:"（ローリングリリース）", s2_row1_desc:"基盤となるOS——固定バージョンはなく、pacman経由で継続的にすべてが更新される。",
+      s2_row2_label:"ログインマネージャ", s2_row2_running:"（自動ログイン）", s2_row2_desc:"セッションを開始する画面。パスワード入力をスキップしてそのままデスクトップに入るよう設定済み。",
+      s2_row3_label:"コンポジタ / WM", s2_row3_desc:"すべてのウィンドウを描画し、タイリング、アニメーション、入力を処理する。これがあなたのデスクトップ環境そのもの——下にGNOME/KDEのセッションは動いていない。",
+      s2_row4_label:"ディスプレイプロトコル", s2_row4_desc:"X11の現代的な後継。HyprlandはWayland compositorなので、画面共有にはxdg-desktop-portal-hyprlandが必要になる。",
+      s2_row5_label:"シェル / バー / ウィジェット", s2_row5_running:"（caelestia経由）", s2_row5_desc:"トップバー、サイドバー、ランチャー、通知、ロック画面をレンダリングする——Hyprland自体が提供しない「デスクトップ環境」の見た目部分すべて。",
+      s3_h2:"「dotfiles」とは、結局何なのか?", s3_lede:"このrice内でずっと目にする言葉——その意味を説明します。",
+      s3_callout:"dotfilesとは、名前がドットで始まる設定ファイル（.bashrc、.gitconfigなど）のこと——Linuxでは先頭のドットは「隠しファイル」を意味する。Linuxのほとんどのアプリは、データベースに埋め込まれたGUI設定パネルではなく、プレーンテキストの設定ファイルから設定を読み込む。「自分のdotfiles」とは、ターミナルの見た目、ウィンドウマネージャの挙動、キーバインド、カラーテーマなど——あなたの環境設定全体をバージョン管理可能なテキストとして定義した、これらのファイル群のこと。",
+      s3_p2:"だからこそ人々はdotfilesをGitHubリポジトリとして共有し、あなたのcaelestiaというフォルダもそう——他の人が公開したdotfilesリポジトリをインストールし、その上でカスタマイズを重ねているものだ。あなたのものは2か所にある：",
+      s3_tree1:"# ベースのrice（caelestia-dots）", s3_tree2:"# あなたの上書き設定（エディタ、ブラウザ、キーバインド）",
+      s3_tree3:"# あなたの追加のキーバインドと設定、最後に読み込まれる", s3_tree4:"# 2つ目のrice（JaKooLitのもの）から一部を借用",
+      s4_h2:"あなたのriceを解説", s4_lede:"「ricing」= Linuxデスクトップの見た目と使い心地をカスタマイズすること。あなたの環境はベーステーマに自分の調整を重ねたもので、上流の更新が変更を消してしまわないようになっている。",
+      s4_card1_title:"ベース: caelestia-dots", s4_card1_desc:"Hyprland + Quickshellのフル機能設定フレームワーク。バー、サイドバー、ランチャー、ロック画面、通知、そして壁紙からパレット全体を生成する動的なMaterial Youカラーエンジンを提供する。",
+      s4_card2_title:"借用: JaKooLitプロファイル", s4_card2_desc:"人気の高い、別のHyprland dotfilesプロジェクト。キーバインドのスタイル、fastfetchの設定、kittyターミナルの設定を~/.config/hypr-profiles/jakoolit経由で取り込んでいる。",
+      s4_card3_title:"あなたの上書き設定", s4_card3_desc:"~/.config/caelestia/内のhypr-user.confとhypr-vars.conf——caelestia本体のファイルを直接編集することなく、あなた個人の選択（デフォルトエディタ、ターミナル、ブラウザ、追加のキーバインド）を置く場所。",
+      s4_callout_strong:"なぜこう階層化するのか?", s4_callout_text:"caelestiaのソースファイルを直接編集すると、ベースriceをgit pullで更新するたびに変更が失われてしまう。個人設定を別の上書きファイルに保持しておけば、ベーステーマはクリーンに更新でき、あなたのカスタマイズはそのまま残る。",
+      s5_h2:"ツール用語集", s5_lede:"設定フォルダ内の見慣れない名前を、一行ずつ解説。",
+      g_hyprland:"タイリング型のWayland compositor——あなたの実際のウィンドウマネージャ。ウィンドウ配置、アニメーション、ワークスペース、キーバインドを処理する。",
+      g_quickshell:"QMLでデスクトップシェル（バー、ウィジェット、ランチャー）を構築するツールキット。caelestiaの目に見えるUI全体——トップバー、サイドバー、オンスクリーン表示——はこれで作られている。",
+      g_kvantum:"Qtアプリ（Dolphin、KDEアプリ、一部のDiscordクライアント）向けのテーマエンジン。あなたの環境ではcatppuccin-mocha-blueに設定されている。",
+      g_breeze:"KDEのデフォルトのGTKアイコン/カーソル/ウィジェットテーマ——KDEセッションを実行していなくても、GTKアプリ（ファイル選択ダイアログ、GTKベースのプログラム）には引き続き適用されている。",
+      g_fuzzel:"高速でミニマルなWayland用アプリケーションランチャー（検索してアプリを起動する際に出てくるもの）。",
+      g_cava:"ターミナル上のオーディオビジュアライザー——音楽に反応して動くあのアニメーションバー。",
+      g_openrgb:"ベンダーを問わないRGBライティング制御ツール。ROGノートPCのキーボード/筐体ライティング用。",
+      g_nwg:"Hyprlandのようなwlroots系compositor上で、GTKテーマの設定やモニタ配置を行うGUIツール。",
+      g_spicetify:"公式Spotifyクライアントのテーマ変更とプラグイン追加を可能にする。",
+      g_swappy:"スクリーンショットに素早く注釈を付けるツール（保存/コピー前に切り抜き、描画、ぼかしができる）。",
+      g_app2unit:"アプリを通常の子プロセスではなく、独自のsystemdトランジェントユニットとして起動する——リソース管理とクリーンアップがより整理される。",
+      g_aur:"Arch公式リポジトリ以外の、コミュニティによるパッケージリポジトリ。yayとparu（あなたの環境に両方インストール済み）は、そこから自動でビルド・インストールする「AURヘルパー」。",
+      g_pacman:"Archのネイティブパッケージマネージャ——公式パッケージのインストール、更新、削除を行う。",
+      s6_h2:"あなたのカラーテーマ", s6_lede:"caelestiaは動的にMaterial Youパレット全体を生成する——現在はピンク/ローズ系の配色に固定されており、先ほどテーマを変更したVS Codeもこれに合わせてある。",
+      s6_p2:"出典: ~/.local/share/caelestia/hypr/scheme/current.conf——Super+Wで壁紙を変更すると、caelestiaがこのパレット全体をそれに合わせて再生成する。",
+      s7_h2:"インストール済みのエディタとアプリ",
+      s7_card1_title:"コードエディタ", s7_card2_title:"Discordクライアント", s7_card2_desc:"Vencord, Equicord, BetterDiscord, Legcord——MODローダー/クライアントが4つ同時にインストールされている",
+      s7_badge2:"1つに絞る価値あり", s7_card3_title:"ターミナル", s7_card3_desc:"GPUアクセラレーション対応のターミナルエミュレータ",
+      s7_card4_title:"ブラウザ", s7_card4_desc:"Google Chrome（安定版）",
+      s8_h2:"重要なキーボードショートカット", s8_th_shortcut:"ショートカット", s8_th_action:"動作", kw_or:"または",
+      k1:"ターミナルを開く（kitty）", k2:"エディタを開く（VS Code）", k3:"ブラウザを開く（Chrome）", k4:"アプリランチャー",
+      k5:"壁紙変更ツール（カラーテーマも再生成される）", k6:"テーマ変更ツール", k7:"画面をロック",
+      k8:"セッション/電源メニュー（シャットダウン、再起動、ログアウト）", k9:"クリップボード履歴", k10:"範囲スクリーンショット（フリーズ）",
+      k11:"画面全体のスクリーンショット → クリップボード", k12:"フローティングウィンドウの切り替え", k13:"フルスクリーンの切り替え",
+      k14:"ワークスペース1〜10へ移動", k15:"ウィンドウをワークスペース1〜10へ移動",
+      s9_h2:"システム状態スナップショット", s9_lede:"このレビュー中に取得した情報——時間があるときに対応する価値あり。",
+      s9_card1_title:"更新", s9_card1_desc:"保留中のpacmanパッケージ——pacman -Syuを実行",
+      s9_card2_title:"パッケージキャッシュ", s9_card2_desc:"古いパッケージバージョン——paccache -rk2で整理",
+      s9_card3_title:"バッテリーの状態", s9_card3_desc:"設計容量（35Wh / 66Wh）に対する割合——劣化が進んでおり、交換を検討",
+      s9_card4_title:"ディスク空き容量", s9_card4_desc:"root上の空き容量、使用率41%——健全、さらに未使用の173GB NTFSパーティションあり",
+      footer:"あなたの実際のシステムからClaude Codeがローカルで生成しました——ここでの情報はどこにも送信されていません。"
+    }
+  };
+
+  var htmlLangMap = { en:"en", th:"th", la:"lo", ja:"ja" };
+
+  function apply(lang){
+    var dict = translations[lang] || translations.en;
+    var nodes = document.querySelectorAll("[data-i18n]");
+    for (var i=0; i<nodes.length; i++){
+      var key = nodes[i].getAttribute("data-i18n");
+      if (dict[key] !== undefined){ nodes[i].textContent = dict[key]; }
+    }
+    document.documentElement.setAttribute("lang", htmlLangMap[lang] || "en");
+    var btns = document.querySelectorAll(".langsw button");
+    for (var j=0; j<btns.length; j++){
+      btns[j].setAttribute("aria-pressed", btns[j].getAttribute("data-lang") === lang ? "true" : "false");
+    }
+    try { localStorage.setItem("sysguide-lang", lang); } catch (e) {}
+  }
+
+  var buttons = document.querySelectorAll(".langsw button");
+  for (var k=0; k<buttons.length; k++){
+    buttons[k].addEventListener("click", function(ev){
+      apply(ev.currentTarget.getAttribute("data-lang"));
+    });
+  }
+
+  var saved = "en";
+  try { saved = localStorage.getItem("sysguide-lang") || "en"; } catch (e) {}
+  apply(saved);
+})();
+</script>
+</body>
+</html>
