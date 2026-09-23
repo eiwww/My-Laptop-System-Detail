@@ -4,7 +4,7 @@ A single-file, no-build static HTML page documenting my Arch Linux + Hyprland de
 
 ## Files
 
-- `my-system-guide.html` — the page itself. Fully self-contained (no build step, no external network requests, no dependencies) — just open it in a browser.
+- `index.html` — the page itself. Fully self-contained (no build step, no external network requests, no dependencies) — just open it in a browser.
 
 ## Language support
 
@@ -17,7 +17,7 @@ Tool and project names (Hyprland, Quickshell, pacman, AUR, etc.) are kept in the
 Just open it directly — no server needed:
 
 ```bash
-xdg-open my-system-guide.html
+index.html
 ```
 
 or double-click it in a file manager, or open it via GitHub Pages if you publish this repo.
